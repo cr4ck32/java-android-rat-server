@@ -3,12 +3,8 @@ import java.io.IOException;
 public class Main {
 
     public static final String SERVER_VERSION = "0.6";
-    public static final int LOG_TYPE_PROGRESS = 0;
-    public static final int LOG_TYPE_NORMAL = 1;
-    public static final int LOG_TYPE_LOCATIONS = 2;
-    public static final int LOG_TYPE_USER_OVERVIEW = 3;
 
-    static Logger logger = new Logger(LOG_TYPE_NORMAL, "Main");
+    static Logger logger = new Logger(Logger.LOG_TYPE_NORMAL, "Main");
     static int port = 3000;
 
     public static void main(String[] args) throws IOException {

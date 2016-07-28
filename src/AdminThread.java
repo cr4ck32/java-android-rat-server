@@ -14,7 +14,7 @@ public class AdminThread implements Runnable {
 
     public AdminThread(Socket socket) {
         this.socket = socket;
-        logger = new Logger(Main.LOG_TYPE_NORMAL, "admin_" + socket.getInetAddress());
+        logger = new Logger(Logger.LOG_TYPE_NORMAL, "admin_" + socket.getInetAddress());
     }
 
     @Override
@@ -57,15 +57,19 @@ public class AdminThread implements Runnable {
 
     private void handleCommand(String strCommand) throws IOException {
         if (strCommand.equalsIgnoreCase("list")) {
-            for (int i = 0; i < ConnectionHandler.clientThreads.size(); i++) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(i);
-                sb.append(": ");
-                sb.append(ConnectionHandler.clientThreads.get(i).getClientID());
-                sb.append(ConnectionHandler.clientThreads.get(i).getSocket().getInetAddress());
-                sb.append(" ");
-                sb.append(ConnectionHandler.clientThreads.get(i).getInfectedApp());
-                logger.log(sb.toString());
+            if (ConnectionHandler.clientThreads.size() > 0) {
+                for (int i = 0; i < ConnectionHandler.clientThreads.size(); i++) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(i);
+                    sb.append(": ");
+                    sb.append(ConnectionHandler.clientThreads.get(i).getClientID());
+                    sb.append(ConnectionHandler.clientThreads.get(i).getSocket().getInetAddress());
+                    sb.append(" ");
+                    sb.append(ConnectionHandler.clientThreads.get(i).getInfectedApp());
+                    logger.log(sb.toString());
+                }
+            } else {
+                logger.log("No connected devices");
             }
         } else if (strCommand.equalsIgnoreCase("unique")) {
             for (ClientThread thread : uniqueClients()) {

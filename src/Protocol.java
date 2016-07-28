@@ -10,5 +10,4 @@ public class Protocol extends HashMap<String, Integer> {
     public static final int COMMAND = 3100;
     public static final int MESSAGE = 4000;
     public static final int FILE = 5000;
-
 }

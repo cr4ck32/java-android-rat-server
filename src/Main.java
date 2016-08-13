@@ -2,7 +2,8 @@ import java.io.IOException;
 
 public class Main {
 
-    public static final String SERVER_VERSION = "0.6";
+    public static final String SERVER_VERSION = "0.7";
+    public static Thread connectionHandlerThread;
 
     static Logger logger = new Logger(Logger.LOG_TYPE_NORMAL, "Main");
     static int port = 3000;
@@ -27,7 +28,8 @@ public class Main {
         }
         // everything is okay, start the server
         logger.log("\r\nServer started, listening on port " + port + "\r\n");
-        new Thread(new ConnectionHandler(port)).start();
+        connectionHandlerThread = new Thread(new ConnectionHandler(port));
+        connectionHandlerThread.start();
         Runtime.getRuntime().addShutdownHook(new Thread(new ShutDown()));
     }
 

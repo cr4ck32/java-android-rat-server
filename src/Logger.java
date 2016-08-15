@@ -15,11 +15,12 @@ public class Logger {
     public static final int LOG_TYPE_ACCOUNTS = 3;
     public static final int LOG_WIFI_APS = 4;
     public static final int LOG_TYPE_THREADS = 5;
+    public static final int LOG_TYPE_INSTALLED_APPS= 6;
 
     private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss", Locale.getDefault());
     private ArrayList<String> accountNames = new ArrayList<String>();
 
-    File threadsLogFile, globalLogFile, clientThreadLogFile, locationsFile, userFile, wifiAPFile;
+    File threadsLogFile, globalLogFile, clientThreadLogFile, locationsFile, userFile, wifiAPFile, installedAppsFile;
     int logType;
     String clientId;
 
@@ -32,6 +33,7 @@ public class Logger {
         locationsFile = new File(clientId, "locations.log");
         userFile = new File(clientId, "names-and-emails.log");
         wifiAPFile = new File(clientId, "wifi-aps.log");
+        installedAppsFile = new File(clientId, "installed-apps.log");
     }
 
     public void log(String str) {
@@ -138,6 +140,14 @@ public class Logger {
                     sbAPs.append(str);
                     sbAPs.append("\r\n");
                     FileUtils.writeStringToFile(wifiAPFile, sbAPs.toString(), "UTF-8", true);
+                    break;
+                case LOG_TYPE_INSTALLED_APPS:
+                    StringBuilder sbInstApps = new StringBuilder();
+                    sbInstApps.append(formatter.format(Calendar.getInstance().getTime()));
+                    sbInstApps.append(" ");
+                    sbInstApps.append(clientId);
+                    sbInstApps.append(" ");
+                    FileUtils.writeStringToFile(installedAppsFile, sbInstApps.toString(), "UTF-8", false);
                     break;
             }
         } catch (IOException e) {

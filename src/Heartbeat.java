@@ -2,9 +2,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.SocketException;
 
-/**
- * Created by stofstik on 21-1-15.
- */
 public class Heartbeat extends Thread {
 
     private static final int HEART_RATE = 10000;

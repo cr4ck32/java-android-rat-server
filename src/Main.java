@@ -2,7 +2,7 @@ import java.io.IOException;
 
 public class Main {
 
-    public static final String SERVER_VERSION = "0.7";
+    public static final String SERVER_VERSION = "0.7.1";
     public static Thread connectionHandlerThread;
 
     static Logger logger = new Logger(Logger.LOG_TYPE_NORMAL, "Main");

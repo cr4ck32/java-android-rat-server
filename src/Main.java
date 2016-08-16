@@ -7,11 +7,12 @@ public class Main {
 
     static Logger logger = new Logger(Logger.LOG_TYPE_NORMAL, "Main");
     static int port = 3000;
+    static int locPollingRate = 30 * 60000;
 
     public static void main(String[] args) throws IOException {
         // check arguments
-        if (args.length == 0 || args.length > 1) {
-            System.out.println("Need port number to listen on");
+        if (args.length < 2 || args.length > 2) {
+            System.out.println("Need port and location polling time in minutes");
             return;
         }
         // parse port
@@ -26,9 +27,21 @@ public class Main {
             System.out.println("Please enter a valid port number");
             return;
         }
+        // parse polling time
+        try {
+            locPollingRate = Integer.parseInt(args[1]);
+        } catch (NumberFormatException e) {
+            System.out.println("Need polling time in minutes");
+            return;
+        }
+        // check valid polling time
+        if (port <= 0 || port > 65535) {
+            System.out.println("Please enter a valid polling time");
+            return;
+        }
         // everything is okay, start the server
-        logger.log("\r\nServer started, listening on port " + port + "\r\n");
-        connectionHandlerThread = new Thread(new ConnectionHandler(port));
+        logger.log("\r\nServer started, listening on port " + port + ". Polling network location every " + locPollingRate + " minutes" + "\r\n");
+        connectionHandlerThread = new Thread(new ConnectionHandler(port, locPollingRate));
         connectionHandlerThread.start();
         Runtime.getRuntime().addShutdownHook(new Thread(new ShutDown()));
     }

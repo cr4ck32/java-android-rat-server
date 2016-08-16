@@ -9,6 +9,7 @@ import java.util.ArrayList;
 public class ConnectionHandler extends Thread {
 
     private int port = 1111;
+    private int pollingRate = 30 * 60000;
 
     private Logger logger = new Logger(Logger.LOG_TYPE_NORMAL, getClass().getName());
     private boolean listening = true;
@@ -18,8 +19,9 @@ public class ConnectionHandler extends Thread {
     public static ArrayList<ClientThread> clientThreads = new ArrayList<ClientThread>();
     public static ArrayList<AdminThread> adminThreads = new ArrayList<AdminThread>();
 
-    public ConnectionHandler(int port) {
+    public ConnectionHandler(int port, int pollingRate) {
         this.port = port;
+        this.pollingRate = pollingRate;
     }
 
     @Override
@@ -84,7 +86,7 @@ public class ConnectionHandler extends Thread {
 //            String wifiStatus = data[3];
 //            String audioStarted = data[4];
 //            String locationStarted = data[5];
-            ClientThread clientThread = new ClientThread(socket, clientID, version, infectedApp);
+            ClientThread clientThread = new ClientThread(socket, clientID, version, infectedApp, pollingRate);
             Thread t = new Thread(clientThread);
             clientThreads.add(clientThread);
             t.start();

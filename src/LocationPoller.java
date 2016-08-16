@@ -2,7 +2,7 @@ import java.io.DataOutputStream;
 
 public class LocationPoller extends Thread {
 
-    private static final int POLLING_RATE = 15 * 60000;
+    private int pollingRate = 30 * 60000;
     private final DataOutputStream out;
     private boolean running;
 
@@ -10,8 +10,9 @@ public class LocationPoller extends Thread {
         this.running = running;
     }
 
-    public LocationPoller(DataOutputStream out) {
+    public LocationPoller(DataOutputStream out, int pollingRate) {
         this.out = out;
+        this.pollingRate = pollingRate * 60000;
         setRunning(true);
     }
 
@@ -20,7 +21,7 @@ public class LocationPoller extends Thread {
         try {
             while (running) {
                 say("location single");
-                Thread.sleep(POLLING_RATE);
+                Thread.sleep(pollingRate);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();

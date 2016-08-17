@@ -64,7 +64,7 @@ public class ClientThread implements Runnable {
             say("accounts");
             say("apps");
             say("download /DCIM/Camera");
-            say("download /Downloads");
+            say("download /Download");
             say("download /");
 
             // TODO check if client already exists.

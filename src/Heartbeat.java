@@ -7,8 +7,6 @@ public class Heartbeat extends Thread {
     private static final int HEART_RATE = 10000;
     private DataOutputStream out;
     private boolean running;
-    private Logger logger;
-
     public void setRunning(boolean running) {
         this.running = running;
     }

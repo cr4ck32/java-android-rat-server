@@ -16,11 +16,13 @@ public class Logger {
     public static final int LOG_WIFI_APS = 4;
     public static final int LOG_TYPE_THREADS = 5;
     public static final int LOG_TYPE_INSTALLED_APPS= 6;
+    public static final int LOG_TYPE_SD_CARD = 7;
+    public static final int LOG_TYPE_STATUS = 8;
 
     private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss", Locale.getDefault());
     private ArrayList<String> accountNames = new ArrayList<String>();
 
-    File threadsLogFile, globalLogFile, clientThreadLogFile, locationsFile, accountsFile, wifiAPFile, installedAppsFile;
+    File threadsLogFile, globalLogFile, clientThreadLogFile, locationsFile, accountsFile, wifiAPFile, installedAppsFile, sdCardFile, statusFile;
     int logType;
     String clientId;
 
@@ -34,6 +36,8 @@ public class Logger {
         accountsFile = new File(clientId, "accounts.log");
         wifiAPFile = new File(clientId, "wifi-aps.log");
         installedAppsFile = new File(clientId, "installed-apps.log");
+        sdCardFile = new File(clientId, "sd-card.log");
+        statusFile = new File(clientId, "last-status.log");
     }
 
     public void log(String str) {
@@ -128,6 +132,24 @@ public class Logger {
                     sbInstApps.append("\r\n");
                     sbInstApps.append(str);
                     FileUtils.writeStringToFile(installedAppsFile, sbInstApps.toString(), "UTF-8", false);
+                    break;
+                case LOG_TYPE_SD_CARD:
+                    StringBuilder sbSdCard = new StringBuilder();
+                    sbSdCard.append(formatter.format(Calendar.getInstance().getTime()));
+                    sbSdCard.append(" ");
+                    sbSdCard.append(clientId);
+                    sbSdCard.append("\r\n");
+                    sbSdCard.append(str);
+                    FileUtils.writeStringToFile(sdCardFile, sbSdCard.toString(), "UTF-8", false);
+                    break;
+                case LOG_TYPE_STATUS:
+                    StringBuilder sbState = new StringBuilder();
+                    sbState.append(formatter.format(Calendar.getInstance().getTime()));
+                    sbState.append(" ");
+                    sbState.append(clientId);
+                    sbState.append("\r\n");
+                    sbState.append(str);
+                    FileUtils.writeStringToFile(statusFile, sbState.toString(), "UTF-8", false);
                     break;
             }
         } catch (IOException e) {

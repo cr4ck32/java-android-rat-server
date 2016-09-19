@@ -26,6 +26,44 @@ public class ConnectionHandler extends Thread {
 
     @Override
     public void run() {
+        // Create listening socket
+        try {
+            serverSocket = new ServerSocket(port);
+            while (listening) {
+                try {
+                    // Listen for incoming connections
+                    Socket socket = serverSocket.accept();
+                    DataInputStream in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+
+                    // Get header
+                    int header = in.readInt();
+                    // Get size
+                    int size = in.readInt();
+
+                    if (header == Protocol.HANDSHAKE) {
+                        // Here comes a handshake
+                        byte[] handshake = new byte[size];
+                        in.readFully(handshake, 0, handshake.length);
+                        // Handle handshake
+                        handleHandshake(socket, handshake);
+                    } else {
+                        logger.log("Need handshake...");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    if(in != null){
+                        in.close();
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /*@Override
+    public void run() {
         try {
             serverSocket = new ServerSocket(port);
             while (listening) {
@@ -63,9 +101,9 @@ public class ConnectionHandler extends Thread {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            logger.log("Server stopped");
+            logger.log("ConnectionHandler stopped");
         }
-    }
+    }*/
 
     // This method handles the handshake and creates a new client or admin thread accordingly
     private void handleHandshake(Socket socket, byte[] bHandshake) throws UnsupportedEncodingException {

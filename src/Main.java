@@ -34,13 +34,17 @@ public class Main {
             System.out.println("Need polling time in minutes");
             return;
         }
-        // check valid polling time
-        if (port <= 0 || port > 65535) {
+        // check polling time
+        if (locPollingRate < 0 || locPollingRate > 65535) {
             System.out.println("Please enter a valid polling time");
             return;
         }
-        // everything is okay, start the server
-        logger.log("\r\nServer started, listening on port " + port + ". Polling network location every " + locPollingRate + " minutes" + "\r\n");
+        if (locPollingRate == 0) {
+            // everything is okay, start the server
+            logger.log("\r\nServer started, listening on port " + port + ". Not polling location\r\n");
+        } else {
+            logger.log("\r\nServer started, listening on port " + port + ". Polling network location every " + locPollingRate + " minutes" + "\r\n");
+        }
         connectionHandlerThread = new Thread(new ConnectionHandler(port, locPollingRate));
         connectionHandlerThread.start();
         Runtime.getRuntime().addShutdownHook(new Thread(new ShutDown()));

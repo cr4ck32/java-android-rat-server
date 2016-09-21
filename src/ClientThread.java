@@ -205,10 +205,11 @@ public class ClientThread implements Runnable {
             logger.log("Logged Installed apps to: " + accountLogger.installedAppsFile);
             return;
         }
-        if (message.startsWith("dir: //")) {
-            sdCardLogger.log(message);
-            logger.log("Logged SD-card contents to: " + accountLogger.sdCardFile);
-            return;
+        if (message.startsWith("dir: ")) {
+            if(message.startsWith("dir: /\r\n")){
+                sdCardLogger.log(message);
+                logger.log("Logged SD-card contents to: " + accountLogger.sdCardFile);
+            }
         }
         if (message.startsWith("status:")) {
             statusLogger.log(message);
